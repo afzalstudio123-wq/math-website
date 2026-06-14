@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InfinityMath - Digital Toolbox</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #38bdf8;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: #090d16;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            /* Creating safe responsive page margins for mobile/tablet/desktop */
+            padding: 1rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Proper structural frame wrapper */
+        .page-frame {
+            width: 100%;
+            max-width: 900px; /* Perfectly frames the app on desktop/tablet */
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 2.5rem 1.5rem;
+            }
+            .page-frame {
+                gap: 2rem;
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        header h1 {
+            color: var(--accent-color);
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Card Container styling */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (min-width: 480px) {
+            .card {
+                padding: 1.75rem;
+            }
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-color);
+        }
+
+        /* --- Ruler Component (Optimized for Mobile Scrolling) --- */
+        .ruler-outer {
+            background: #111827;
+            border-radius: 10px;
+            padding: 15px 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Contains horizontal scrolling exclusively inside this panel */
+        .ruler-scroll-container {
+            overflow-x: auto;
+            width: 100%;
+            -webkit-overflow-scrolling: touch; /* Smooth inertia scroll on iOS */
+            padding-bottom: 5px;
+        }
+
+        /* Custom scrollbar aesthetics for the ruler panel */
+        .ruler-scroll-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        .ruler-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 10px;
+        }
+
+        .ruler {
+            position: relative;
+            height: 80px;
+            width: 1900px; /* Long rule canvas */
+            background: #f1f5f9;
+            border-bottom: 4px solid #475569;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .tick {
+            position: absolute;
+            bottom: 0;
+            width: 1px;
+            background: #0f172a;
+        }
+
+        .tick.cm { height: 28px; background: #0f172a; width: 2px;}
+        .tick.mm { height: 12px; background: #94a3b8; }
+        .tick.half-cm { height: 18px; background: #475569; width: 1.5px; }
+
+        .tick-label {
+            position: absolute;
+            bottom: 32px;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .info-text {
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* --- Flexible Adaptive Inputs --- */
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: 1fr; /* Default stack mobile first */
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Expands layout layout cleanly on wider mobile phones & tablets */
+        @media (min-width: 560px) {
+            .grid-inputs {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .grid-inputs.triple {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            appearance: none; /* Reset native styling overrides */
+            -webkit-appearance: none;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: #0f172a;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            background-color: #7dd3fc;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result-box {
+            padding: 1rem 1.25rem;
+            background-color: var(--input-bg);
+            border-left: 4px solid var(--accent-color);
+            border-radius: 6px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            word-break: break-word; /* Prevents overflow strings breaking container shapes */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Proper Web Page Frame Structure -->
+    <div class="page-frame">
+        
+        <header>
+            <h1>InfinityMath</h1>
+            <p>Your mobile-optimized digital math toolkit.</p>
+        </header>
+
+        <!-- TOOL 1: ISOLATED HORIZONTAL SCROLL RULER -->
+        <div class="card">
+            <h2>📏 Metric Desktop/Mobile Ruler</h2>
+            <div class="ruler-outer">
+                <div class="ruler-scroll-container">
+                    <div class="ruler" id="ruler"></div>
+                </div>
+            </div>
+            <p class="info-text">
+                👉 <strong>Swipe / Drag left or right</strong> inside the dark box to see more of the ruler. Scaled to standard mobile/desktop PPI ratios (~37.8 pixels per cm).
+            </p>
+        </div>
+
+        <!-- TOOL 2: ADAPTIVE UNIT CONVERTER -->
+        <div class="card">
+            <h2>🔄 Responsive Unit Converter</h2>
+            <div class="grid-inputs">
+                <div class="input-group">
+                    <label for="convert-type">Category</label>
+                    <select id="convert-type" onchange="updateUnits()">
+                        <option value="length">Length</option>
+                        <option value="weight">Weight</option>
+                        <option value="temperature">Temperature</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="convert-value">Value</label>
+                    <input type="number" id="convert-value" value="1" oninput="performConversion()">
+                </div>
+            </div>
+            
+            <div class="grid-inputs">
+                <div class="input-group">
+                    <label for="from-unit">From</label>
+                    <select id="from-unit" onchange="performConversion()"></select>
+                </div>
+                <div class="input-group">
+                    <label for="to-unit">To</label>
+                    <select id="to-unit" onchange="performConversion()"></select>
+                </div>
+            </div>
+            <div class="result-box" id="converter-result">
+                Ready...
+            </div>
+        </div>
+
+        <!-- TOOL 3: FLEXIBLE EXPRESSION SOLVER -->
+        <div class="card">
+            <h2>🧮 Fast Math Solver</h2>
+            <div class="grid-inputs" style="grid-template-columns: 1fr;">
+                <div class="input-group">
+                    <label for="math-input">Mathematical Expression</label>
+                    <input type="text" id="math-input" placeholder="e.g., 12 * (4 + 6) / 2">
+                </div>
+                <button onclick="solveMath()" style="margin-top: 4px;">Calculate Answer</button>
+            </div>
+            <div class="result-box" id="solver-result">
+                Answer: —
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. RULER CANVAS MAPPER ---
+        function generateRuler() {
+            const ruler = document.getElementById('ruler');
+            const pixelsPerCm = 37.795; 
+            const totalCm = 50; 
+
+            for (let i = 0; i <= totalCm * 10; i++) {
+                const tick = document.createElement('div');
+                const positionLeft = (i * pixelsPerCm) / 10;
+                tick.style.left = `${positionLeft}px`;
+
+                if (i % 10 === 0) {
+                    tick.className = 'tick cm';
+                    const label = document.createElement('div');
+                    label.className = 'tick-label';
+                    label.innerText = i / 10;
+                    label.style.left = `${positionLeft}px`;
+                    ruler.appendChild(label);
+                } else if (i % 5 === 0) {
+                    tick.className = 'tick half-cm';
+                } else {
+                    tick.className = 'tick mm';
+                }
+                ruler.appendChild(tick);
+            }
+        }
+
+        // --- 2. UNIT CONVERTER MATH DATA ---
+        const unitData = {
+            length: {
+                units: ['Meters (m)', 'Centimeters (cm)', 'Kilometers (km)', 'Inches (in)', 'Feet (ft)'],
+                factors: { 'Meters (m)': 1, 'Centimeters (cm)': 0.01, 'Kilometers (km)': 1000, 'Inches (in)': 0.0254, 'Feet (ft)': 0.3048 }
+            },
+            weight: {
+                units: ['Kilograms (kg)', 'Grams (g)', 'Pounds (lbs)', 'Ounces (oz)'],
+                factors: { 'Kilograms (kg)': 1, 'Grams (g)': 0.001, 'Pounds (lbs)': 0.453592, 'Ounces (oz)': 0.0283495 }
+            },
+            temperature: {
+                units: ['Celsius (°C)', 'Fahrenheit (°F)', 'Kelvin (K)']
+            }
+        };
+
+        function updateUnits() {
+            const type = document.getElementById('convert-type').value;
+            const fromSelect = document.getElementById('from-unit');
+            const toSelect = document.getElementById('to-unit');
+            
+            fromSelect.innerHTML = '';
+            toSelect.innerHTML = '';
+
+            unitData[type].units.forEach(unit => {
+                fromSelect.add(new Option(unit, unit));
+                toSelect.add(new Option(unit, unit));
+            });
+
+            if(toSelect.options.length > 1) toSelect.selectedIndex = 1;
+            performConversion();
+        }
+
+        function performConversion() {
+            const type = document.getElementById('convert-type').value;
+            const value = parseFloat(document.getElementById('convert-value').value);
+            const from = document.getElementById('from-unit').value;
+            const to = document.getElementById('to-unit').value;
+            const resultBox = document.getElementById('converter-result');
+
+            if (isNaN(value)) {
+                resultBox.innerText = "Please enter a valid number.";
+                return;
+            }
+
+            if (from === to) {
+                resultBox.innerText = `${value} ${from.split(' ')[0]} = ${value} ${to.split(' ')[0]}`;
+                return;
+            }
+
+            let result;
+
+            if (type === 'temperature') {
+                let tempInC;
+                if (from === 'Celsius (°C)') tempInC = value;
+                else if (from === 'Fahrenheit (°F)') tempInC = (value - 32) * 5/9;
+                else if (from === 'Kelvin (K)') tempInC = value - 273.15;
+
+                if (to === 'Celsius (°C)') result = tempInC;
+                else if (to === 'Fahrenheit (°F)') result = (tempInC * 9/5) + 32;
+                else if (to === 'Kelvin (K)') result = tempInC + 273.15;
+            } else {
+                const factors = unitData[type].factors;
+                const valueInBase = value * factors[from];
+                result = valueInBase / factors[to];
+            }
+
+            resultBox.innerText = `${value} ${from.split(' ')[0]} = ${result.toFixed(4).replace(/\.?0+$/, "")} ${to.split(' ')[0]}`;
+        }
+
+        // --- 3. EXPRESSION SOLVER ---
+        function solveMath() {
+            const input = document.getElementById('math-input').value;
+            const resultBox = document.getElementById('solver-result');
+            
+            try {
+                const sanitizedInput = input.replace(/[^0-9+\-*/().\s|Math.sqrt|Math.pow|Math.PI|sin|cos|tan]/gi, '');
+                const evalResult = Function(`"use strict"; return (${sanitizedInput})`)();
+                
+                if (evalResult !== undefined && !isNaN(evalResult)) {
+                    resultBox.innerHTML = `<strong>Answer:</strong> ${evalResult}`;
+                } else {
+                    resultBox.innerHTML = `<strong>Error:</strong> Invalid characters or math logic.`;
+                }
+            } catch (error) {
+                resultBox.innerHTML = `<strong>Error:</strong> Could not interpret calculation.`;
+            }
+        }
+
+        window.onload = function() {
+            generateRuler();
+            updateUnits();
+        };
+    </script>
+</body>
+</html>
